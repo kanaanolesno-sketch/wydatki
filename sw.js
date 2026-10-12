@@ -1,6 +1,6 @@
 // Service worker: pozwala zainstalować aplikację i otwierać ją szybko.
 // Strona zawsze najpierw z sieci (żeby aktualizacje docierały od razu), z pamięci tylko bez internetu.
-var CACHE = 'wydatki-v5';
+var CACHE = 'wydatki-v6';
 var PLIKI = ['./', 'index.html', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
