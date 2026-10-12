@@ -55,6 +55,11 @@
   #kontoBox { display:none; background:#fff; border:1px solid var(--line); border-radius:14px; padding:4px 14px 14px; margin-top:10px; }
   #kontoBox label.f { margin-top:12px; }
   .hint { font-size:13px; color:var(--muted); margin-top:6px; }
+  #instal { display:none; background:var(--sage-soft); border:1px solid #c3d3c3; border-radius:14px; padding:14px; margin-top:14px; }
+  #instal b { color:var(--navy); }
+  #instal p { margin:6px 0 0; font-size:14px; color:var(--ink); line-height:1.45; }
+  #instal button { margin-top:10px; width:100%; padding:13px; font-size:16px; font-weight:700; color:#fff; background:var(--sage); border:0; border-radius:12px; }
+  #instal .x { float:right; background:none; border:0; color:var(--muted); font-size:20px; width:auto; padding:0 4px; margin:0; }
   .offline { display:none; background:#fff4e5; color:#7a4b00; font-size:14px; padding:10px 12px;
     border-radius:10px; margin-top:12px; }
 </style>
@@ -69,6 +74,12 @@
 </header>
 
 <main>
+  <div id="instal">
+    <button class="x" type="button" id="instalX" aria-label="Zamknij">×</button>
+    <b>📲 Zainstaluj aplikację na telefonie</b>
+    <p id="instalTxt"></p>
+    <button type="button" id="instalBtn" style="display:none">Zainstaluj</button>
+  </div>
   <div class="offline" id="offline">Brak internetu. Połącz się, aby wysłać wydatek.</div>
 
   <form id="f" novalidate>
@@ -231,6 +242,42 @@
     $('fotoTxt').innerHTML = '<span class="ico">📷</span>Dotknij, aby zrobić zdjęcie<br>lub wybrać z galerii';
     $('done').style.display = 'none'; $('f').style.display = 'block';
   };
+
+  // ---- Instalacja na telefonie ----
+  (function () {
+    var ua = navigator.userAgent;
+    var zainstalowana = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+    if (zainstalowana || store('instalUkryj') === '1') return;
+    var iOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var android = /Android/.test(ua);
+    var iosSafari = iOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|FBAN|FBAV|Instagram|WhatsApp|Line\//.test(ua);
+    var box = $('instal'), txt = $('instalTxt'), btn = $('instalBtn');
+    $('instalX').onclick = function () { box.style.display = 'none'; store('instalUkryj', '1'); };
+    if (iOS && iosSafari) {
+      txt.innerHTML = 'Dotknij <b>Udostępnij</b> (kwadrat ze strzałką ⬆️ na dole ekranu), potem <b>„Do ekranu początkowego”</b> i <b>Dodaj</b>.';
+      box.style.display = 'block';
+    } else if (iOS) {
+      txt.innerHTML = 'Na iPhonie aplikację można zainstalować tylko z <b>Safari</b>. Skopiuj ten link i otwórz go w Safari.';
+      btn.textContent = 'Skopiuj link'; btn.style.display = 'block';
+      btn.onclick = function () {
+        var u = location.href.split('#')[0];
+        (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function () { btn.textContent = 'Skopiowano ✓ – wklej w Safari'; },
+          function () { prompt('Skopiuj link:', u); });
+      };
+      box.style.display = 'block';
+    } else if (android) {
+      txt.innerHTML = 'Dotknij przycisku poniżej. Jeśli go nie ma: menu <b>⋮</b> w Chrome → <b>„Zainstaluj aplikację”</b>.';
+      box.style.display = 'block';
+    }
+    var odlozone = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault(); odlozone = e;
+      txt.innerHTML = 'Jedno dotknięcie i aplikacja będzie na ekranie głównym.';
+      btn.textContent = 'Zainstaluj'; btn.style.display = 'block'; box.style.display = 'block';
+      btn.onclick = function () { odlozone.prompt(); odlozone.userChoice.then(function () { box.style.display = 'none'; }); };
+    });
+    window.addEventListener('appinstalled', function () { box.style.display = 'none'; });
+  })();
 
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
 </script>
