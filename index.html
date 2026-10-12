@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wydatki Kanaan</title>
+<meta name="theme-color" content="#14243f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wydatki">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --navy:#14243f; --sage:#6b8f6b; --sage-soft:#e8efe8; --bg:#f6f7f4; --line:#d5dbd3;
+    --err:#b3261e; --ink:#1c2230; --muted:#5d6676;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  header { background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top) + 14px) 16px 16px;
+    display:flex; align-items:center; gap:12px; }
+  header img { width:52px; height:52px; border-radius:50%; background:#fff; padding:3px; flex:none; }
+  header h1 { margin:0; font-size:19px; letter-spacing:.2px; }
+  header p { margin:2px 0 0; font-size:13px; color:#c9d3e3; }
+  main { max-width:520px; margin:0 auto; padding:8px 16px calc(env(safe-area-inset-bottom) + 24px); }
+  label.f { display:block; font-weight:600; margin:18px 0 6px; font-size:15px; }
+  .req { color:var(--sage); }
+  input, select { width:100%; padding:13px 12px; font-size:16px; border:1px solid var(--line);
+    border-radius:12px; background:#fff; color:var(--ink); appearance:none; -webkit-appearance:none; }
+  select { background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 20px) 55%, calc(100% - 14px) 55%; background-size:6px 6px; background-repeat:no-repeat; }
+  input:focus, select:focus { outline:2px solid var(--sage); border-color:var(--sage); }
+  .seg { display:flex; gap:8px; }
+  .seg label { position:relative; flex:1; border:1px solid var(--line); border-radius:12px; padding:13px; background:#fff;
+    text-align:center; font-size:15px; cursor:pointer; }
+  .seg input { position:absolute; left:0; top:0; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .seg label.on { border-color:var(--sage); background:var(--sage-soft); color:var(--navy); font-weight:700; }
+  .foto { border:2px dashed #a9bba9; border-radius:14px; padding:18px; text-align:center; background:#fff;
+    cursor:pointer; color:var(--muted); font-size:15px; }
+  .foto img { max-width:100%; max-height:280px; border-radius:10px; display:none; margin:0 auto 10px; }
+  .foto .ico { font-size:30px; display:block; margin-bottom:4px; }
+  #plik { display:none; }
+  button.main { width:100%; margin-top:26px; padding:16px; font-size:17px; font-weight:700; color:#fff;
+    background:var(--navy); border:0; border-radius:14px; }
+  button.main:disabled { opacity:.6; }
+  .msg { margin-top:12px; font-size:15px; color:var(--err); min-height:20px; text-align:center; }
+  .done { display:none; text-align:center; padding-top:48px; }
+  .done .ok { width:84px; height:84px; border-radius:50%; background:var(--sage-soft); color:var(--sage);
+    font-size:46px; line-height:84px; margin:0 auto 12px; }
+  .done h2 { margin:0 0 6px; color:var(--navy); }
+  .done p { color:var(--muted); margin:0; }
+  .offline { display:none; background:#fff4e5; color:#7a4b00; font-size:14px; padding:10px 12px;
+    border-radius:10px; margin-top:12px; }
+</style>
+</head>
+<body>
+<header>
+  <img src="logo.png" alt="Kościół Kanaan">
+  <div>
+    <h1>Wydatki kościoła</h1>
+    <p>Zgłoś wydatek · paragon obowiązkowy</p>
+  </div>
+</header>
+
+<main>
+  <div class="offline" id="offline">Brak internetu. Połącz się, aby wysłać wydatek.</div>
+
+  <form id="f" novalidate>
+    <label class="f" for="kto">1. Kto? <span class="req">*</span></label>
+    <input id="kto" placeholder="Imię i nazwisko" autocomplete="name">
+
+    <label class="f" for="dzial">2. Dział <span class="req">*</span></label>
+    <select id="dzial"><option value="">— wybierz —</option></select>
+
+    <label class="f" for="co">3. Co? <span class="req">*</span></label>
+    <input id="co" placeholder="np. kawa i mleko do kawiarni">
+
+    <label class="f" for="data">4. Data <span class="req">*</span></label>
+    <input id="data" type="date">
+
+    <label class="f" for="kwota">5. Kwota (zł) <span class="req">*</span></label>
+    <input id="kwota" inputmode="decimal" placeholder="0,00">
+
+    <label class="f">6. Zwrot: na konto czy gotówką? <span class="req">*</span></label>
+    <div class="seg" id="seg">
+      <label><input type="radio" name="zwrot" value="Na konto">Na konto</label>
+      <label><input type="radio" name="zwrot" value="Gotówką">Gotówką</label>
+    </div>
+
+    <label class="f">Zdjęcie paragonu <span class="req">*</span></label>
+    <div class="foto" id="fotoBox" role="button" tabindex="0">
+      <img id="podglad" alt="">
+      <span id="fotoTxt"><span class="ico">📷</span>Dotknij, aby zrobić zdjęcie<br>lub wybrać z galerii</span>
+    </div>
+    <input id="plik" type="file" accept="image/*">
+
+    <button class="main" id="wyslij" type="submit">Wyślij</button>
+    <div class="msg" id="msg"></div>
+  </form>
+
+  <div class="done" id="done">
+    <div class="ok">✓</div>
+    <h2>Dziękujemy!</h2>
+    <p>Wydatek został zapisany.</p>
+    <button class="main" type="button" id="nowy">Zgłoś kolejny wydatek</button>
+  </div>
+</main>
+
+<script>
+  var API = 'https://script.google.com/macros/s/AKfycbxHXrhkmwV4Y9ybXnvGY5wH2S5B1kdKcJ2LuENh7tBCAGAXys_yPxS7yaet4cYS5xBw/exec';
+  var DZIALY_ZAPASOWE = ['Kawiarnia','Dzieci','Młodzieża','Kobiet','Technika','Sprzątania','Przywitanie','Inne'];
+  var zdjecie = null;
+  function $(id) { return document.getElementById(id); }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+  function ustawDzialy(lista) {
+    var s = $('dzial'), wyb = s.value;
+    s.innerHTML = '<option value="">— wybierz —</option>';
+    lista.forEach(function (d) { var o = document.createElement('option'); o.value = d; o.textContent = d; s.appendChild(o); });
+    if (wyb) s.value = wyb;
+  }
+  var zapisane = null;
+  try { zapisane = JSON.parse(store('dzialy') || 'null'); } catch (e) {}
+  ustawDzialy(zapisane || DZIALY_ZAPASOWE);
+  fetch(API + '?akcja=dzialy').then(function (r) { return r.json(); }).then(function (j) {
+    if (j && j.ok && j.dzialy && j.dzialy.length) { ustawDzialy(j.dzialy); store('dzialy', JSON.stringify(j.dzialy)); }
+  }).catch(function () {});
+
+  function dzis() { var t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0, 10); }
+  $('data').value = dzis();
+  if (store('kto')) $('kto').value = store('kto');
+
+  // przełącznik Na konto / Gotówką
+  $('seg').addEventListener('change', function () {
+    [].forEach.call($('seg').querySelectorAll('label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
+  });
+
+  // zdjęcie
+  $('fotoBox').onclick = function () { $('plik').click(); };
+  $('plik').onchange = function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    $('fotoTxt').textContent = 'Przetwarzanie zdjęcia…';
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var max = 1600, w = img.width, h = img.height;
+        if (w > max || h > max) { var s = max / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); }
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+        zdjecie = c.toDataURL('image/jpeg', 0.75);
+        $('podglad').src = zdjecie; $('podglad').style.display = 'block';
+        $('fotoTxt').textContent = 'Dotknij, aby zmienić zdjęcie';
+      };
+      img.onerror = function () { zdjecie = null; $('fotoTxt').textContent = 'Nie udało się odczytać zdjęcia. Spróbuj ponownie.'; };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+  };
+
+  function online() { $('offline').style.display = navigator.onLine ? 'none' : 'block'; }
+  window.addEventListener('online', online); window.addEventListener('offline', online); online();
+
+  $('f').onsubmit = function (e) {
+    e.preventDefault();
+    var zw = document.querySelector('input[name=zwrot]:checked');
+    var dane = {
+      kto: $('kto').value.trim(), dzial: $('dzial').value, co: $('co').value.trim(),
+      data: $('data').value, kwota: $('kwota').value.trim(), zwrot: zw ? zw.value : '', zdjecie: zdjecie
+    };
+    var blad = !dane.kto ? 'Wpisz, kto wydał.' : !dane.dzial ? 'Wybierz dział.' : !dane.co ? 'Wpisz, na co był wydatek.' :
+      !dane.data ? 'Podaj datę.' : !(parseFloat(dane.kwota.replace(',', '.')) > 0) ? 'Podaj poprawną kwotę.' :
+      !dane.zwrot ? 'Wybierz: zwrot na konto czy gotówką.' : !dane.zdjecie ? 'Dodaj zdjęcie paragonu.' : '';
+    if (blad) { $('msg').textContent = blad; return; }
+    $('msg').textContent = ''; $('wyslij').disabled = true; $('wyslij').textContent = 'Wysyłanie…';
+    store('kto', dane.kto);
+    fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(dane) })
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (r && r.ok) { $('f').style.display = 'none'; $('done').style.display = 'block'; window.scrollTo(0, 0); }
+        else { $('msg').textContent = (r && r.blad) || 'Błąd. Spróbuj ponownie.'; }
+      })
+      .catch(function () { $('msg').textContent = 'Nie udało się wysłać. Sprawdź internet i spróbuj ponownie.'; })
+      .then(function () { $('wyslij').disabled = false; $('wyslij').textContent = 'Wyślij'; });
+  };
+
+  $('nowy').onclick = function () {
+    $('co').value = ''; $('kwota').value = ''; $('dzial').value = ''; $('data').value = dzis();
+    [].forEach.call(document.querySelectorAll('input[name=zwrot]'), function (r) { r.checked = false; });
+    [].forEach.call($('seg').querySelectorAll('label'), function (l) { l.classList.remove('on'); });
+    zdjecie = null; $('plik').value = ''; $('podglad').style.display = 'none';
+    $('fotoTxt').innerHTML = '<span class="ico">📷</span>Dotknij, aby zrobić zdjęcie<br>lub wybrać z galerii';
+    $('done').style.display = 'none'; $('f').style.display = 'block';
+  };
+
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+</script>
+</body>
+</html>
