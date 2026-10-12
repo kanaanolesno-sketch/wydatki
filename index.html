@@ -247,14 +247,16 @@
   (function () {
     var ua = navigator.userAgent;
     var zainstalowana = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
-    if (zainstalowana || store('instalUkryj') === '1') return;
+    if (zainstalowana) return;
     var iOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var android = /Android/.test(ua);
     var iosSafari = iOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|FBAN|FBAV|Instagram|WhatsApp|Line\//.test(ua);
     var box = $('instal'), txt = $('instalTxt'), btn = $('instalBtn');
-    $('instalX').onclick = function () { box.style.display = 'none'; store('instalUkryj', '1'); };
+    $('instalX').onclick = function () { box.style.display = 'none'; };
     if (iOS && iosSafari) {
-      txt.innerHTML = 'Dotknij <b>Udostępnij</b> (kwadrat ze strzałką ⬆️ na dole ekranu), potem <b>„Do ekranu początkowego”</b> i <b>Dodaj</b>.';
+      txt.innerHTML = '1. Dotknij adresu strony u góry ekranu, żeby pokazać pasek Safari.<br>' +
+        '2. Na <b>dolnym pasku Safari</b> dotknij <b>Udostępnij</b> (kwadrat ze strzałką w górę – środkowa ikona; jeśli jej nie ma: <b>⋯</b> → <b>Udostępnij</b>).<br>' +
+        '3. Wybierz <b>„Do ekranu początkowego”</b> → <b>Dodaj</b>.';
       box.style.display = 'block';
     } else if (iOS) {
       txt.innerHTML = 'Na iPhonie aplikację można zainstalować tylko z <b>Safari</b>. Skopiuj ten link i otwórz go w Safari.';
