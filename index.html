@@ -52,6 +52,9 @@
     font-size:46px; line-height:84px; margin:0 auto 12px; }
   .done h2 { margin:0 0 6px; color:var(--navy); }
   .done p { color:var(--muted); margin:0; }
+  #kontoBox { display:none; background:#fff; border:1px solid var(--line); border-radius:14px; padding:4px 14px 14px; margin-top:10px; }
+  #kontoBox label.f { margin-top:12px; }
+  .hint { font-size:13px; color:var(--muted); margin-top:6px; }
   .offline { display:none; background:#fff4e5; color:#7a4b00; font-size:14px; padding:10px 12px;
     border-radius:10px; margin-top:12px; }
 </style>
@@ -88,6 +91,13 @@
     <div class="seg" id="seg">
       <label><input type="radio" name="zwrot" value="Na konto">Na konto</label>
       <label><input type="radio" name="zwrot" value="Gotówką">Gotówką</label>
+    </div>
+    <div id="kontoBox">
+      <label class="f" for="bank">Bank <span class="req">*</span></label>
+      <input id="bank" placeholder="np. PKO BP, mBank, Pekao">
+      <label class="f" for="konto">Numer konta <span class="req">*</span></label>
+      <input id="konto" inputmode="numeric" autocomplete="off" placeholder="26 cyfr, np. 12 3456 7890 …">
+      <div class="hint">Zapamiętamy dane konta na tym telefonie, żeby nie wpisywać ich za każdym razem.</div>
     </div>
 
     <label class="f">Zdjęcie paragonu <span class="req">*</span></label>
@@ -134,9 +144,26 @@
   if (store('kto')) $('kto').value = store('kto');
 
   // przełącznik Na konto / Gotówką
+  function pokazKonto() {
+    var zw = document.querySelector('input[name=zwrot]:checked');
+    $('kontoBox').style.display = (zw && zw.value === 'Na konto') ? 'block' : 'none';
+  }
   $('seg').addEventListener('change', function () {
     [].forEach.call($('seg').querySelectorAll('label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
+    pokazKonto();
   });
+  if (store('bank')) $('bank').value = store('bank');
+  if (store('konto')) $('konto').value = store('konto');
+
+  // Sprawdzenie numeru konta (NRB 26 cyfr lub IBAN, suma kontrolna mod 97)
+  function kontoOk(wejscie) {
+    var k = String(wejscie || '').toUpperCase().replace(/[\s-]/g, '');
+    if (/^\d{26}$/.test(k)) k = 'PL' + k;
+    if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(k)) return false;
+    var p = (k.slice(4) + k.slice(0, 4)).replace(/[A-Z]/g, function (z) { return String(z.charCodeAt(0) - 55); });
+    var r = 0; for (var i = 0; i < p.length; i++) r = (r * 10 + Number(p[i])) % 97;
+    return r === 1;
+  }
 
   // zdjęcie
   $('fotoBox').onclick = function () { $('plik').click(); };
@@ -170,14 +197,21 @@
     var zw = document.querySelector('input[name=zwrot]:checked');
     var dane = {
       kto: $('kto').value.trim(), dzial: $('dzial').value, co: $('co').value.trim(),
-      data: $('data').value, kwota: $('kwota').value.trim(), zwrot: zw ? zw.value : '', zdjecie: zdjecie
+      data: $('data').value, kwota: $('kwota').value.trim(), zwrot: zw ? zw.value : '', zdjecie: zdjecie,
+      bank: $('bank').value.trim(), konto: $('konto').value.trim()
     };
+    var naKonto = dane.zwrot === 'Na konto';
+    if (!naKonto) { dane.bank = ''; dane.konto = ''; }
     var blad = !dane.kto ? 'Wpisz, kto wydał.' : !dane.dzial ? 'Wybierz dział.' : !dane.co ? 'Wpisz, na co był wydatek.' :
       !dane.data ? 'Podaj datę.' : !(parseFloat(dane.kwota.replace(',', '.')) > 0) ? 'Podaj poprawną kwotę.' :
-      !dane.zwrot ? 'Wybierz: zwrot na konto czy gotówką.' : !dane.zdjecie ? 'Dodaj zdjęcie paragonu.' : '';
+      !dane.zwrot ? 'Wybierz: zwrot na konto czy gotówką.' :
+      (naKonto && !dane.bank) ? 'Podaj nazwę banku.' :
+      (naKonto && !kontoOk(dane.konto)) ? 'Numer konta jest nieprawidłowy. Sprawdź cyfry (26 cyfr).' :
+      !dane.zdjecie ? 'Dodaj zdjęcie paragonu.' : '';
     if (blad) { $('msg').textContent = blad; return; }
     $('msg').textContent = ''; $('wyslij').disabled = true; $('wyslij').textContent = 'Wysyłanie…';
     store('kto', dane.kto);
+    if (naKonto) { store('bank', dane.bank); store('konto', dane.konto); }
     fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(dane) })
       .then(function (r) { return r.json(); })
       .then(function (r) {
@@ -192,6 +226,7 @@
     $('co').value = ''; $('kwota').value = ''; $('dzial').value = ''; $('data').value = dzis();
     [].forEach.call(document.querySelectorAll('input[name=zwrot]'), function (r) { r.checked = false; });
     [].forEach.call($('seg').querySelectorAll('label'), function (l) { l.classList.remove('on'); });
+    pokazKonto();
     zdjecie = null; $('plik').value = ''; $('podglad').style.display = 'none';
     $('fotoTxt').innerHTML = '<span class="ico">📷</span>Dotknij, aby zrobić zdjęcie<br>lub wybrać z galerii';
     $('done').style.display = 'none'; $('f').style.display = 'block';
