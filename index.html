@@ -34,7 +34,8 @@
     background-position:calc(100% - 20px) 55%, calc(100% - 14px) 55%; background-size:6px 6px; background-repeat:no-repeat; }
   input:focus, select:focus { outline:2px solid var(--sage); border-color:var(--sage); }
   .seg { display:flex; gap:8px; }
-  .seg label { position:relative; flex:1; border:1px solid var(--line); border-radius:12px; padding:13px; background:#fff;
+  .seg small { display:block; font-size:11px; font-weight:400; color:var(--muted); margin-top:2px; }
+  .seg label { position:relative; flex:1; border:1px solid var(--line); border-radius:12px; padding:12px 6px; background:#fff;
     text-align:center; font-size:15px; cursor:pointer; }
   .seg input { position:absolute; left:0; top:0; width:1px; height:1px; opacity:0; pointer-events:none; }
   .seg label.on { border-color:var(--sage); background:var(--sage-soft); color:var(--navy); font-weight:700; }
@@ -98,10 +99,11 @@
     <label class="f" for="kwota">5. Kwota (zł) <span class="req">*</span></label>
     <input id="kwota" inputmode="decimal" placeholder="0,00">
 
-    <label class="f">6. Zwrot: na konto czy gotówką? <span class="req">*</span></label>
+    <label class="f">6. Zwrot pieniędzy <span class="req">*</span></label>
     <div class="seg" id="seg">
       <label><input type="radio" name="zwrot" value="Na konto">Na konto</label>
       <label><input type="radio" name="zwrot" value="Gotówką">Gotówką</label>
+      <label><input type="radio" name="zwrot" value="Bez zwrotu">Bez zwrotu<small>karta kościoła</small></label>
     </div>
     <div id="kontoBox">
       <label class="f" for="bank">Bank <span class="req">*</span></label>
@@ -215,7 +217,7 @@
     if (!naKonto) { dane.bank = ''; dane.konto = ''; }
     var blad = !dane.kto ? 'Wpisz, kto wydał.' : !dane.dzial ? 'Wybierz dział.' : !dane.co ? 'Wpisz, na co był wydatek.' :
       !dane.data ? 'Podaj datę.' : !(parseFloat(dane.kwota.replace(',', '.')) > 0) ? 'Podaj poprawną kwotę.' :
-      !dane.zwrot ? 'Wybierz: zwrot na konto czy gotówką.' :
+      !dane.zwrot ? 'Wybierz rodzaj zwrotu.' :
       (naKonto && !dane.bank) ? 'Podaj nazwę banku.' :
       (naKonto && !kontoOk(dane.konto)) ? 'Numer konta jest nieprawidłowy. Sprawdź cyfry (26 cyfr).' :
       !dane.zdjecie ? 'Dodaj zdjęcie paragonu.' : '';
